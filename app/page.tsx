@@ -64,7 +64,7 @@ export default function PuyoGame() {
       setHighScore(parseInt(storedHighScore, 10))
     }
 
-    audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    audioContext.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
   }, [])
 
   useEffect(() => {
@@ -277,7 +277,7 @@ export default function PuyoGame() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentPuyo, gameState, isPaused])
+  }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause])
 
   useEffect(() => {
     if (gameState === 'active' && !isPaused) {
@@ -287,7 +287,7 @@ export default function PuyoGame() {
 
       return () => clearInterval(gameLoop)
     }
-  }, [gameState, currentPuyo, isPaused])
+  }, [gameState, currentPuyo, isPaused, movePuyo])
 
   const getPuyoColorClass = (color: PuyoColor): string => {
     switch (color) {
