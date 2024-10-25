@@ -219,7 +219,7 @@ export default function PuyoGame() {
     const newNextPuyos = [...nextPuyos.slice(1), generatePuyoPair()]
     setNextPuyos(newNextPuyos)
     setCanHold(true)
-
+//a
     // 落下判定と消去チェックを行う
     applyGravityAndCheck(newGrid)
   }
