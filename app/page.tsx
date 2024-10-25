@@ -2,11 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "@/components/ui/button"
+import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 
 // Types
 type PuyoColor = 'red' | 'green' | 'blue' | 'yellow' | 'purple' | null
 type GameState = 'title' | 'active' | 'over' | 'pause'
 type Grid = PuyoColor[][]
+type ControlAction = 'left' | 'right' | 'down' | 'rotateLeft' | 'rotateRight' | 'hold'
+type Controls = Record<ControlAction, string[]>
 
 // Constants
 const GRID_ROWS = 12
@@ -55,6 +59,16 @@ export default function PuyoGame() {
   const [heldPuyo, setHeldPuyo] = useState<PuyoPair | null>(null)
   const [canHold, setCanHold] = useState(true)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [showOptions, setShowOptions] = useState(false)
+  const [volume, setVolume] = useState(50)
+  const [controls, setControls] = useState<Controls>({
+    left: ['a', 'ArrowLeft', ''],
+    right: ['d', 'ArrowRight', ''],
+    down: ['s', 'ArrowDown', ''],
+    rotateLeft: ['o', '', ''],
+    rotateRight: ['p', '', ''],
+    hold: ['q', ' ', '']
+  })
 
   const generatePuyoPair = useCallback((): PuyoPair => ({
     color1: randomPuyoColor(),
@@ -310,6 +324,19 @@ export default function PuyoGame() {
     setCanHold(false)
   }
 
+  const toggleOptions = () => {
+    setShowOptions(!showOptions)
+  }
+
+  const handleControlChange = (action: ControlAction, index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value
+    setControls(prev => {
+      const newKeys = [...prev[action]]
+      newKeys[index] = newValue
+      return { ...prev, [action]: newKeys }
+    })
+  }
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'escape') {
@@ -317,19 +344,43 @@ export default function PuyoGame() {
       }
       if (isPaused) return
 
-      switch (e.key.toLowerCase()) {
-        case 'a': movePuyo('left'); playSound(300, 0.1); break
-        case 'd': movePuyo('right'); playSound(300, 0.1); break
-        case 's': movePuyo('down'); playSound(200, 0.1); break
-        case 'o': rotatePuyo('left'); playSound(400, 0.1); break
-        case 'p': rotatePuyo('right'); playSound(400, 0.1); break
-        case 'q': holdPuyo()
+      const action = Object.entries(controls).find(([_, keys]) => 
+        keys.includes(e.key)
+      )?.[0] as ControlAction | undefined
+
+      if (action) {
+        switch (action) {
+          case 'left':
+            movePuyo('left')
+            playSound(300, 0.1)
+            break
+          case 'right':
+            movePuyo('right')
+            playSound(300, 0.1)
+            break
+          case 'down':
+            movePuyo('down')
+            playSound(200, 0.1)
+            break
+          case 'rotateLeft':
+            rotatePuyo('left')
+            playSound(400, 0.1)
+            break
+          case 'rotateRight':
+            rotatePuyo('right')
+            playSound(400, 0.1)
+            break
+          case 'hold':
+            holdPuyo()
+            playSound(500, 0.1)
+            break
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause, holdPuyo])
+  }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause, holdPuyo, controls])
 
   useEffect(() => {
     if (gameState === 'active' && !isPaused && !isAnimating) {
@@ -386,8 +437,42 @@ export default function PuyoGame() {
       <h1 className="text-4xl font-bold mb-4">改造ぷよぷよ</h1>
       {gameState === 'title' && (
         <div className="text-center">
-          <Button onClick={startGame} className="mb-4">Start Game</Button>
-          <p className="text-xl">High Score: {highScore}</p>
+          <Button onClick={startGame} className="mb-4">ゲームスタート</Button>
+          <Button onClick={toggleOptions} className="mb-4 ml-4">オプション</Button>
+          <p className="text-xl">ハイスコア: {highScore}</p>
+          {showOptions && (
+            <div className="mt-4 p-4 bg-white rounded shadow">
+              <h2 className="text-2xl font-bold mb-2">オプション</h2>
+              <div className="mb-4">
+                <label className="block mb-2">音量: {volume}%</label>
+                <Slider
+                  value={[volume]}
+                  onValueChange={(value) => setVolume(value[0])}
+                  max={100}
+                  step={1}
+                />
+              </div>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold mb-2">操作設定</h3>
+                {Object.entries(controls).map(([action, keys]) => (
+                  <div key={action} className="mb-2">
+                    <label className="block mb-1">{action}:</label>
+                    <div className="flex gap-2">
+                      {keys.map((key, index) => (
+                        <input
+                          key={index}
+                          type="text"
+                          value={key}
+                          onChange={(e) => handleControlChange(action as ControlAction, index, e)}
+                          className="w-1/3 p-2 border rounded"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
       {gameState === 'active' && (
