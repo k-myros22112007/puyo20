@@ -54,6 +54,7 @@ export default function PuyoGame() {
   const fallSpeedRef = useRef(1000) // useEffectで使用するためのref
   const [heldPuyo, setHeldPuyo] = useState<PuyoPair | null>(null)
   const [canHold, setCanHold] = useState(true)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   const generatePuyoPair = useCallback((): PuyoPair => ({
     color1: randomPuyoColor(),
@@ -185,12 +186,13 @@ export default function PuyoGame() {
     applyGravityAndCheck(newGrid)
   }
 
-  const applyGravityAndCheck = (grid: Grid) => {
+  const applyGravityAndCheck = async (grid: Grid) => {
+    setIsAnimating(true)
     let newGrid = applyGravity(grid)
     let chainCount = 0
     let hasMatches
 
-    const checkAndUpdateChain = () => {
+    const checkAndUpdateChain = async () => {
       hasMatches = false
       const matchedPuyos: Set<string> = new Set()
 
@@ -215,6 +217,10 @@ export default function PuyoGame() {
           newGrid[y][x] = null
         })
 
+        // グリッドを更新して消去アニメーションを表示
+        setGrid([...newGrid])
+        await new Promise(resolve => setTimeout(resolve, 250)) // 0.25秒待機
+
         // スコア計算
         const puyosCleared = matchedPuyos.size
         const chainMultiplier = Math.pow(2, chainCount - 1)
@@ -226,13 +232,15 @@ export default function PuyoGame() {
 
         // 重力を再度適用
         newGrid = applyGravity(newGrid)
+        setGrid([...newGrid])
+        await new Promise(resolve => setTimeout(resolve, 250)) // 0.25秒待機
 
         playSound(500, 0.2) // チェーンリアクションの音を再生
       }
     }
 
     do {
-      checkAndUpdateChain()
+      await checkAndUpdateChain()
     } while (hasMatches)
 
     setGrid(newGrid)
@@ -240,12 +248,14 @@ export default function PuyoGame() {
     // チェーンカウンターをリセットするタイミングを遅らせる
     setTimeout(() => {
       setChainCounter(0)
-    }, 3000) // 3秒後にリセット
+    }, 5000) // 3秒後にリセット
 
     // ゲームオーバーのチェック
     if (newGrid[1].some(cell => cell !== null)) {
       setGameState('over')
     }
+
+    setIsAnimating(false)
   }
 
   const findConnectedPuyos = (grid: Grid, x: number, y: number, color: PuyoColor, visited: Set<string> = new Set()): Set<string> => {
@@ -313,7 +323,7 @@ export default function PuyoGame() {
         case 's': movePuyo('down'); playSound(200, 0.1); break
         case 'o': rotatePuyo('left'); playSound(400, 0.1); break
         case 'p': rotatePuyo('right'); playSound(400, 0.1); break
-        case 'h': holdPuyo()
+        case 'q': holdPuyo()
       }
     }
 
@@ -322,14 +332,14 @@ export default function PuyoGame() {
   }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause, holdPuyo])
 
   useEffect(() => {
-    if (gameState === 'active' && !isPaused) {
+    if (gameState === 'active' && !isPaused && !isAnimating) {
       const gameLoop = setInterval(() => {
         movePuyo('down')
-      }, fallSpeed) // fallSpeedを使用
+      }, fallSpeed)
 
       return () => clearInterval(gameLoop)
     }
-  }, [gameState, currentPuyo, isPaused, movePuyo, fallSpeed])
+  }, [gameState, currentPuyo, isPaused, movePuyo, fallSpeed, isAnimating])
 
   useEffect(() => {
     if (gameState === 'active' && !isPaused) {
@@ -406,7 +416,7 @@ export default function PuyoGame() {
               <h3 className="text-xl font-semibold mb-2">Chain: {chainCounter}</h3>
               <div className="border-2 border-gray-400 relative">
                 {renderGrid()}
-                {currentPuyo && (
+                {currentPuyo && !isAnimating && (
                   <>
                     <div
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color1)} absolute`}
