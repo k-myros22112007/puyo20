@@ -135,13 +135,13 @@ export default function PuyoGame() {
     if (!currentPuyo || gameState !== 'active' || isPaused) return
 
     const newPuyo = { ...currentPuyo }
-    if (direction === 'left') newPuyo.x -= 1
-    if (direction === 'right') newPuyo.x += 1
-    if (direction === 'down') newPuyo.y += 1
+    if (direction === 'left') newPuyo.x = Math.round(newPuyo.x - 1)
+    if (direction === 'right') newPuyo.x = Math.round(newPuyo.x + 1)
+    if (direction === 'down') newPuyo.y = Math.round(newPuyo.y + 1)
 
     if (isValidMove(newPuyo)) {
       setCurrentPuyo(newPuyo)
-    } else if (direction === 'down' && newPuyo.y > 1) {  // y > 1 の場合のみplacePuyoを呼び出す
+    } else if (direction === 'down' && newPuyo.y > 1) {
       placePuyo()
     }
   }
@@ -536,16 +536,16 @@ export default function PuyoGame() {
                     <div
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color1)} absolute`}
                       style={{
-                        left: `${currentPuyo.x * 2}rem`,
-                        top: `${(currentPuyo.y - 1) * 2}rem`,
+                        left: `${Math.round(currentPuyo.x * 2)}rem`,
+                        top: `${Math.round((currentPuyo.y - 1) * 2)}rem`,
                         zIndex: 20,
                       }}
                     />
                     <div
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color2)} absolute`}
                       style={{
-                        left: `${getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[0] * 2}rem`,
-                        top: `${(getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[1] - 1) * 2}rem`,
+                        left: `${Math.round(getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[0] * 2)}rem`,
+                        top: `${Math.round((getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[1] - 1) * 2)}rem`,
                         zIndex: 20,
                       }}
                     />
