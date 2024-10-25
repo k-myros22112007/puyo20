@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
 
 // Types
 type PuyoColor = 'red' | 'green' | 'blue' | 'yellow' | 'purple' | null
@@ -344,7 +343,8 @@ export default function PuyoGame() {
       }
       if (isPaused) return
 
-      const action = Object.entries(controls).find(([_, keys]) => 
+      // アンダースコアを使用しない形に変更
+      const action = Object.entries(controls).find(([, keys]) => 
         keys.includes(e.key)
       )?.[0] as ControlAction | undefined
 
