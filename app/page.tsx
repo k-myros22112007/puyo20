@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 
 // Types
 type PuyoColor = 'red' | 'green' | 'blue' | 'yellow' | 'purple' | null
@@ -59,7 +59,6 @@ export default function PuyoGame() {
   const [canHold, setCanHold] = useState(true)
   const [isAnimating, setIsAnimating] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
-  const [volume, setVolume] = useState(50)
   const [controls, setControls] = useState<Controls>({
     left: ['a', 'ArrowLeft', ''],
     right: ['d', 'ArrowRight', ''],
@@ -343,8 +342,7 @@ export default function PuyoGame() {
       }
       if (isPaused) return
 
-      // アンダースコアを使用しない形に変更
-      const action = Object.entries(controls).find(([, keys]) => 
+      const action = Object.entries(controls).find(([_, keys]) => 
         keys.includes(e.key)
       )?.[0] as ControlAction | undefined
 
@@ -443,15 +441,6 @@ export default function PuyoGame() {
           {showOptions && (
             <div className="mt-4 p-4 bg-white rounded shadow">
               <h2 className="text-2xl font-bold mb-2">オプション</h2>
-              <div className="mb-4">
-                <label className="block mb-2">音量: {volume}%</label>
-                <Slider
-                  value={[volume]}
-                  onValueChange={(value) => setVolume(value[0])}
-                  max={100}
-                  step={1}
-                />
-              </div>
               <div className="mb-4">
                 <h3 className="text-xl font-bold mb-2">操作設定</h3>
                 {Object.entries(controls).map(([action, keys]) => (
