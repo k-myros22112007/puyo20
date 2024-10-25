@@ -436,7 +436,7 @@ export default function PuyoGame() {
         <div className="text-center">
           <Button onClick={startGame} className="mb-4">ゲームスタート</Button>
           <Button onClick={toggleOptions} className="mb-4 ml-4">オプション</Button>
-          <p className="text-xl">イスコア: {highScore}</p>
+          <p className="text-xl">ハイスコア: {highScore}</p>
           {showOptions && (
             <div className="mt-4 p-4 bg-white rounded shadow">
               <h2 className="text-2xl font-bold mb-2">オプション</h2>
