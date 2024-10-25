@@ -179,12 +179,14 @@ export default function PuyoGame() {
     setCurrentPuyo(nextPuyos[0])
     const newNextPuyos = [...nextPuyos.slice(1), generatePuyoPair()]
     setNextPuyos(newNextPuyos)
-    checkForMatches(newGrid)
     setCanHold(true)
+
+    // 落下判定と消去チェックを行う
+    applyGravityAndCheck(newGrid)
   }
 
-  const checkForMatches = (grid: Grid) => {
-    let newGrid = [...grid]
+  const applyGravityAndCheck = (grid: Grid) => {
+    let newGrid = applyGravity(grid)
     let chainCount = 0
     let hasMatches
 
@@ -222,7 +224,7 @@ export default function PuyoGame() {
         setScore(prevScore => prevScore + points)
         setChainCounter(chainCount)
 
-        // 重力を適用
+        // 重力を再度適用
         newGrid = applyGravity(newGrid)
 
         playSound(500, 0.2) // チェーンリアクションの音を再生
@@ -234,8 +236,6 @@ export default function PuyoGame() {
     } while (hasMatches)
 
     setGrid(newGrid)
-    setCurrentPuyo(nextPuyos[0])
-    setNextPuyos([...nextPuyos.slice(1), generatePuyoPair()])
     
     // チェーンカウンターをリセットするタイミングを遅らせる
     setTimeout(() => {
