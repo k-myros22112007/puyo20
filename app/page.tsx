@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button"
 type PuyoColor = 'red' | 'green' | 'blue' | 'yellow' | 'purple' | null
 type GameState = 'title' | 'active' | 'over' | 'pause'
 type Grid = PuyoColor[][]
-type ControlAction = 'left' | 'right' | 'down' | 'rotateLeft' | 'rotateRight' | 'hold'
+type ControlAction = 'left' | 'right' | 'down' | 'rotateLeft' | 'rotateRight' | 'hold' | 'hardDrop'
 type Controls = Record<ControlAction, string[]>
 
 // Constants
-const GRID_ROWS = 12
+const GRID_ROWS = 13  // 12から13に変更
 const GRID_COLS = 6
 const COLORS: PuyoColor[] = ['red', 'green', 'blue', 'yellow', 'purple']
 
@@ -64,19 +64,20 @@ export default function PuyoGame() {
     down: ['s', 'ArrowDown', ''],
     rotateLeft: ['o', '', ''],
     rotateRight: ['p', '', ''],
-    hold: ['q', ' ', '']
+    hold: ['q', ' ', ''],
+    hardDrop: ['w', 'ArrowUp', ''] // 新しい高速落下の設定
   })
 
   const generatePuyoPair = useCallback((): PuyoPair => ({
     color1: randomPuyoColor(),
     color2: randomPuyoColor(),
     x: 2,
-    y: 0,
+    y: 1,  // 0から1に変更
     rotation: 0
   }), [])
 
   const generateNextPuyos = useCallback(() => {
-    return Array(4).fill(null).map(() => generatePuyoPair())
+    return Array(6).fill(null).map(() => generatePuyoPair())
   }, [generatePuyoPair])
 
   useEffect(() => {
@@ -116,7 +117,7 @@ export default function PuyoGame() {
     setScore(0)
     setChainCounter(0)
     const initialNextPuyos = generateNextPuyos()
-    setCurrentPuyo(initialNextPuyos[0])
+    setCurrentPuyo({...initialNextPuyos[0], x: 2, y: 1})  // yを0から1に変更
     setNextPuyos(initialNextPuyos.slice(1))
     setGameState('active')
     setIsPaused(false)
@@ -140,7 +141,7 @@ export default function PuyoGame() {
 
     if (isValidMove(newPuyo)) {
       setCurrentPuyo(newPuyo)
-    } else if (direction === 'down') {
+    } else if (direction === 'down' && newPuyo.y > 1) {  // y > 1 の場合のみplacePuyoを呼び出す
       placePuyo()
     }
   }
@@ -153,6 +154,27 @@ export default function PuyoGame() {
 
     if (isValidMove(newPuyo)) {
       setCurrentPuyo(newPuyo)
+    } else {
+      // 回転できない場合、壁蹴りを試みる
+      const kicks = [
+        { x: 1, y: 0 },  // 右に1マス
+        { x: -1, y: 0 }, // 左に1マス
+        { x: 0, y: -1 }, // 上に1マス
+        { x: 1, y: -1 }, // 右上に1マス
+        { x: -1, y: -1 } // 左上に1マス
+      ]
+
+      for (const kick of kicks) {
+        const kickedPuyo = {
+          ...newPuyo,
+          x: newPuyo.x + kick.x,
+          y: newPuyo.y + kick.y
+        }
+        if (isValidMove(kickedPuyo)) {
+          setCurrentPuyo(kickedPuyo)
+          return
+        }
+      }
     }
   }
 
@@ -161,9 +183,9 @@ export default function PuyoGame() {
     const [x2, y2] = getSecondPuyoPosition(x, y, rotation)
 
     return (
-      x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS &&
-      x2 >= 0 && x2 < GRID_COLS && y2 >= 0 && y2 < GRID_ROWS &&
-      !grid[y][x] && !grid[y2][x2]
+      x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS &&  // yの下限を0に変更
+      x2 >= 0 && x2 < GRID_COLS && y2 >= 0 && y2 < GRID_ROWS &&  // y2の下限も0に変更
+      (y === 0 || !grid[y][x]) && (y2 === 0 || !grid[y2][x2])  // y === 0 またはy2 === 0 の場合は常に有効
     )
   }
 
@@ -184,11 +206,16 @@ export default function PuyoGame() {
     const { x, y, color1, color2, rotation } = currentPuyo
     const [x2, y2] = getSecondPuyoPosition(x, y, rotation)
 
-    newGrid[y][x] = color1
-    newGrid[y2][x2] = color2
+    // 配列の範囲をチェック
+    if (y >= 0 && y < GRID_ROWS && x >= 0 && x < GRID_COLS) {
+      newGrid[y][x] = color1
+    }
+    if (y2 >= 0 && y2 < GRID_ROWS && x2 >= 0 && x2 < GRID_COLS) {
+      newGrid[y2][x2] = color2
+    }
 
     setGrid(newGrid)
-    setCurrentPuyo(nextPuyos[0])
+    setCurrentPuyo({...nextPuyos[0], y: 1})  // yを1に設定
     const newNextPuyos = [...nextPuyos.slice(1), generatePuyoPair()]
     setNextPuyos(newNextPuyos)
     setCanHold(true)
@@ -311,11 +338,11 @@ export default function PuyoGame() {
 
     if (heldPuyo) {
       const temp = currentPuyo
-      setCurrentPuyo({ ...heldPuyo, x: 2, y: 0, rotation: 0 })
+      setCurrentPuyo({ ...heldPuyo, x: 2, y: 1, rotation: 0 })  // yを1に設定
       setHeldPuyo(temp)
     } else {
       setHeldPuyo(currentPuyo)
-      setCurrentPuyo(nextPuyos[0])
+      setCurrentPuyo({...nextPuyos[0], y: 1})  // yを1に設定
       setNextPuyos([...nextPuyos.slice(1), generatePuyoPair()])
     }
     setCanHold(false)
@@ -332,6 +359,17 @@ export default function PuyoGame() {
       newKeys[index] = newValue
       return { ...prev, [action]: newKeys }
     })
+  }
+
+  const hardDrop = () => {
+    if (!currentPuyo || gameState !== 'active' || isPaused) return
+
+    let newPuyo = { ...currentPuyo }
+    while (isValidMove({ ...newPuyo, y: newPuyo.y + 1 })) {
+      newPuyo.y += 1
+    }
+    setCurrentPuyo(newPuyo)
+    placePuyo()
   }
 
   useEffect(() => {
@@ -371,13 +409,17 @@ export default function PuyoGame() {
             holdPuyo()
             playSound(500, 0.1)
             break
+          case 'hardDrop':
+            hardDrop()
+            playSound(600, 0.1)
+            break
         }
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause, holdPuyo, controls])
+  }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause, holdPuyo, controls, hardDrop])
 
   useEffect(() => {
     if (gameState === 'active' && !isPaused && !isAnimating) {
@@ -415,7 +457,7 @@ export default function PuyoGame() {
   }
 
   const renderGrid = () => {
-    return grid.map((row, y) => (
+    return grid.slice(1).map((row, y) => (  // 最上段をスライスして表示から除外
       <div key={y} className="flex">
         {row.map((color, x) => (
           <div
@@ -480,7 +522,7 @@ export default function PuyoGame() {
               )}
             </div>
             <div className="flex flex-col items-center">
-              <div className="border-2 border-gray-400 relative">
+              <div className="border-2 border-gray-400 relative" style={{ height: `${(GRID_ROWS - 1) * 2}rem`, width: `${GRID_COLS * 2}rem`, overflow: 'hidden' }}>
                 {renderGrid()}
                 {currentPuyo && !isAnimating && (
                   <>
@@ -488,7 +530,7 @@ export default function PuyoGame() {
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color1)} absolute`}
                       style={{
                         left: `${currentPuyo.x * 2}rem`,
-                        top: `${currentPuyo.y * 2}rem`,
+                        top: `${(currentPuyo.y - 1) * 2}rem`,
                         zIndex: 20,
                       }}
                     />
@@ -496,7 +538,7 @@ export default function PuyoGame() {
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color2)} absolute`}
                       style={{
                         left: `${getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[0] * 2}rem`,
-                        top: `${getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[1] * 2}rem`,
+                        top: `${(getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[1] - 1) * 2}rem`,
                         zIndex: 20,
                       }}
                     />
