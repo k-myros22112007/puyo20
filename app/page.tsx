@@ -273,7 +273,7 @@ export default function PuyoGame() {
         setGrid([...newGrid])
         await new Promise(resolve => setTimeout(resolve, 250)) // 0.25秒待機
 
-        playSound(500, 0.2) // チェーンリアクションの���を再生
+        playSound(500, 0.2) // チェーンリアクションの音を再生
       }
     }
 
@@ -364,15 +364,16 @@ export default function PuyoGame() {
   const hardDrop = () => {
     if (!currentPuyo || gameState !== 'active' || isPaused) return
 
-    const newPuyo = { ...currentPuyo }
-    let y = newPuyo.y
-
-    while (isValidMove({ ...newPuyo, y: y + 1 })) {
-      y += 1
+    let newPuyo = { ...currentPuyo }
+    while (isValidMove({ ...newPuyo, y: newPuyo.y + 1 })) {
+      newPuyo.y += 1
     }
-
-    setCurrentPuyo({ ...newPuyo, y })
+    setCurrentPuyo(newPuyo)
     placePuyo()
+  }
+
+  const restartGame = () => {
+    startGame()
   }
 
   useEffect(() => {
@@ -559,7 +560,10 @@ export default function PuyoGame() {
               ))}
             </div>
           </div>
-          <Button onClick={togglePause} className="mt-4">{isPaused ? 'Resume' : 'Pause'}</Button>
+          <div className="mt-4 flex gap-4">
+            <Button onClick={togglePause}>{isPaused ? 'Resume' : 'Pause'}</Button>
+            <Button onClick={restartGame}>Restart</Button>
+          </div>
         </div>
       )}
       {gameState === 'over' && (
@@ -567,14 +571,44 @@ export default function PuyoGame() {
           <h2 className="text-3xl font-bold mb-4">Game Over</h2>
           <p className="text-xl mb-2">Final Score: {score}</p>
           <p className="text-xl mb-4">High Score: {highScore}</p>
-          <Button onClick={startGame}>Play Again</Button>
+          <div className="flex justify-center gap-4">
+            <Button onClick={startGame}>Play Again</Button>
+            <Button onClick={toggleOptions}>オプション</Button>
+          </div>
+          {showOptions && (
+            <div className="mt-4 p-4 bg-white rounded shadow">
+              <h2 className="text-2xl font-bold mb-2">オプション</h2>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold mb-2">操作設定</h3>
+                {Object.entries(controls).map(([action, keys]) => (
+                  <div key={action} className="mb-2">
+                    <label className="block mb-1">{action}:</label>
+                    <div className="flex gap-2">
+                      {keys.map((key, index) => (
+                        <input
+                          key={index}
+                          type="text"
+                          value={key}
+                          onChange={(e) => handleControlChange(action as ControlAction, index, e)}
+                          className="w-1/3 p-2 border rounded"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
       {isPaused && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg">
             <h2 className="text-3xl font-bold mb-4">Paused</h2>
-            <Button onClick={togglePause}>Resume</Button>
+            <div className="flex gap-4">
+              <Button onClick={togglePause}>Resume</Button>
+              <Button onClick={restartGame}>Restart</Button>
+            </div>
           </div>
         </div>
       )}
