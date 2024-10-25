@@ -138,11 +138,11 @@ export default function PuyoGame() {
     const newPuyo = { ...currentPuyo }
     if (direction === 'left') {
       newPuyo.x = Math.round(newPuyo.x - 1)
-      setPositionAdjustment(prev => prev - 1)
+      setPositionAdjustment(prev => prev + 1)  // 左に移動時は+1px
     }
     if (direction === 'right') {
       newPuyo.x = Math.round(newPuyo.x + 1)
-      setPositionAdjustment(prev => prev + 1)
+      setPositionAdjustment(prev => prev - 1)  // 右に移動時は-1px
     }
     if (direction === 'down') newPuyo.y = Math.round(newPuyo.y + 1)
 
