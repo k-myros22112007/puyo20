@@ -67,6 +67,7 @@ export default function PuyoGame() {
     hold: ['q', ' ', ''],
     hardDrop: ['w', 'ArrowUp', ''] // 新しい高速落下の設定
   })
+  const [positionAdjustment, setPositionAdjustment] = useState(0);
 
   const generatePuyoPair = useCallback((): PuyoPair => ({
     color1: randomPuyoColor(),
@@ -135,8 +136,14 @@ export default function PuyoGame() {
     if (!currentPuyo || gameState !== 'active' || isPaused) return
 
     const newPuyo = { ...currentPuyo }
-    if (direction === 'left') newPuyo.x = Math.round(newPuyo.x - 1)
-    if (direction === 'right') newPuyo.x = Math.round(newPuyo.x + 1)
+    if (direction === 'left') {
+      newPuyo.x = Math.round(newPuyo.x - 1)
+      setPositionAdjustment(prev => prev - 1)
+    }
+    if (direction === 'right') {
+      newPuyo.x = Math.round(newPuyo.x + 1)
+      setPositionAdjustment(prev => prev + 1)
+    }
     if (direction === 'down') newPuyo.y = Math.round(newPuyo.y + 1)
 
     if (isValidMove(newPuyo)) {
@@ -219,7 +226,8 @@ export default function PuyoGame() {
     const newNextPuyos = [...nextPuyos.slice(1), generatePuyoPair()]
     setNextPuyos(newNextPuyos)
     setCanHold(true)
-//a
+    setPositionAdjustment(0)
+
     // 落下判定と消去チェックを行う
     applyGravityAndCheck(newGrid)
   }
@@ -536,7 +544,7 @@ export default function PuyoGame() {
                     <div
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color1)} absolute`}
                       style={{
-                        left: `${Math.round(currentPuyo.x * 2)}rem`,
+                        left: `calc(${Math.round(currentPuyo.x * 2)}rem + ${positionAdjustment}px)`,
                         top: `${Math.round((currentPuyo.y - 1) * 2)}rem`,
                         zIndex: 20,
                       }}
@@ -544,7 +552,7 @@ export default function PuyoGame() {
                     <div
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color2)} absolute`}
                       style={{
-                        left: `${Math.round(getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[0] * 2)}rem`,
+                        left: `calc(${Math.round(getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[0] * 2)}rem + ${positionAdjustment}px)`,
                         top: `${Math.round((getSecondPuyoPosition(currentPuyo.x, currentPuyo.y, currentPuyo.rotation)[1] - 1) * 2)}rem`,
                         zIndex: 20,
                       }}
