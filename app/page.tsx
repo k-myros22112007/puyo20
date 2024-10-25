@@ -45,13 +45,15 @@ export default function PuyoGame() {
   const [gameState, setGameState] = useState<GameState>('title')
   const [score, setScore] = useState(0)
   const [currentPuyo, setCurrentPuyo] = useState<PuyoPair | null>(null)
-  const [nextPuyo, setNextPuyo] = useState<PuyoPair | null>(null)
+  const [nextPuyos, setNextPuyos] = useState<PuyoPair[]>([])
   const [chainCounter, setChainCounter] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [highScore, setHighScore] = useState(0)
   const audioContext = useRef<AudioContext | null>(null)
   const [fallSpeed, setFallSpeed] = useState(1000) // 初期落下速度（ミリ秒）
   const fallSpeedRef = useRef(1000) // useEffectで使用するためのref
+  const [heldPuyo, setHeldPuyo] = useState<PuyoPair | null>(null)
+  const [canHold, setCanHold] = useState(true)
 
   const generatePuyoPair = useCallback((): PuyoPair => ({
     color1: randomPuyoColor(),
@@ -60,6 +62,10 @@ export default function PuyoGame() {
     y: 0,
     rotation: 0
   }), [])
+
+  const generateNextPuyos = useCallback(() => {
+    return Array(4).fill(null).map(() => generatePuyoPair())
+  }, [generatePuyoPair])
 
   useEffect(() => {
     const storedHighScore = localStorage.getItem('puyoPuyoHighScore')
@@ -97,12 +103,15 @@ export default function PuyoGame() {
     setGrid(createEmptyGrid())
     setScore(0)
     setChainCounter(0)
-    setCurrentPuyo(generatePuyoPair())
-    setNextPuyo(generatePuyoPair())
+    const initialNextPuyos = generateNextPuyos()
+    setCurrentPuyo(initialNextPuyos[0])
+    setNextPuyos(initialNextPuyos.slice(1))
     setGameState('active')
     setIsPaused(false)
-    setFallSpeed(1000) // 落下速度をリセット
-    fallSpeedRef.current = 1000 // refもリセット
+    setFallSpeed(1000)
+    fallSpeedRef.current = 1000
+    setHeldPuyo(null)
+    setCanHold(true)
   }
 
   const togglePause = () => {
@@ -167,8 +176,11 @@ export default function PuyoGame() {
     newGrid[y2][x2] = color2
 
     setGrid(newGrid)
-    setCurrentPuyo(null)
+    setCurrentPuyo(nextPuyos[0])
+    const newNextPuyos = [...nextPuyos.slice(1), generatePuyoPair()]
+    setNextPuyos(newNextPuyos)
     checkForMatches(newGrid)
+    setCanHold(true)
   }
 
   const checkForMatches = (grid: Grid) => {
@@ -222,8 +234,8 @@ export default function PuyoGame() {
     } while (hasMatches)
 
     setGrid(newGrid)
-    setCurrentPuyo(nextPuyo)
-    setNextPuyo(generatePuyoPair())
+    setCurrentPuyo(nextPuyos[0])
+    setNextPuyos([...nextPuyos.slice(1), generatePuyoPair()])
     
     // チェーンカウンターをリセットするタイミングを遅らせる
     setTimeout(() => {
@@ -272,6 +284,22 @@ export default function PuyoGame() {
     return newGrid
   }
 
+  // ホールド機能を実装
+  const holdPuyo = () => {
+    if (!currentPuyo || !canHold || gameState !== 'active' || isPaused) return
+
+    if (heldPuyo) {
+      const temp = currentPuyo
+      setCurrentPuyo({ ...heldPuyo, x: 2, y: 0, rotation: 0 })
+      setHeldPuyo(temp)
+    } else {
+      setHeldPuyo(currentPuyo)
+      setCurrentPuyo(nextPuyos[0])
+      setNextPuyos([...nextPuyos.slice(1), generatePuyoPair()])
+    }
+    setCanHold(false)
+  }
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'escape') {
@@ -285,12 +313,13 @@ export default function PuyoGame() {
         case 's': movePuyo('down'); playSound(200, 0.1); break
         case 'o': rotatePuyo('left'); playSound(400, 0.1); break
         case 'p': rotatePuyo('right'); playSound(400, 0.1); break
+        case 'h': holdPuyo()
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause])
+  }, [currentPuyo, gameState, isPaused, movePuyo, rotatePuyo, togglePause, holdPuyo])
 
   useEffect(() => {
     if (gameState === 'active' && !isPaused) {
@@ -355,13 +384,22 @@ export default function PuyoGame() {
         <div className="flex flex-col items-center">
           <div className="flex gap-8 mb-4">
             <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-semibold mb-2">Next Puyo</h2>
-              {nextPuyo && (
+              <h2 className="text-2xl font-semibold mb-2">Hold</h2>
+              {heldPuyo && (
                 <div className="flex flex-col">
-                  <div className={`puyo-cell ${getPuyoColorClass(nextPuyo.color2)}`} />
-                  <div className={`puyo-cell ${getPuyoColorClass(nextPuyo.color1)}`} />
+                  <div className={`puyo-cell ${getPuyoColorClass(heldPuyo.color2)}`} />
+                  <div className={`puyo-cell ${getPuyoColorClass(heldPuyo.color1)}`} />
                 </div>
               )}
+            </div>
+            <div className="flex flex-col items-center">
+              <h2 className="text-2xl font-semibold mb-2">Next Puyos</h2>
+              {nextPuyos.map((puyo, index) => (
+                <div key={index} className="flex flex-col mb-2">
+                  <div className={`puyo-cell ${getPuyoColorClass(puyo.color2)}`} />
+                  <div className={`puyo-cell ${getPuyoColorClass(puyo.color1)}`} />
+                </div>
+              ))}
             </div>
             <div className="flex flex-col items-center">
               <h2 className="text-2xl font-semibold mb-2">Score: {score}</h2>
