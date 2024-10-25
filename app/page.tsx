@@ -4,14 +4,14 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 
 // Types
-type PuyoColor = 'red' | 'green' | 'blue' | 'yellow' | null
+type PuyoColor = 'red' | 'green' | 'blue' | 'yellow' | 'purple' | null
 type GameState = 'title' | 'active' | 'over' | 'pause'
 type Grid = PuyoColor[][]
 
 // Constants
 const GRID_ROWS = 12
 const GRID_COLS = 6
-const COLORS: PuyoColor[] = ['red', 'green', 'blue', 'yellow']
+const COLORS: PuyoColor[] = ['red', 'green', 'blue', 'yellow', 'purple']
 
 // Helper functions
 const createEmptyGrid = (): Grid => Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null))
@@ -31,6 +31,7 @@ const customStyles = `
   .puyo-green { background-color: #10B981; }
   .puyo-blue { background-color: #3B82F6; }
   .puyo-yellow { background-color: #F59E0B; }
+  .puyo-purple { background-color: #9333EA; }
   .puyo-cell {
     width: 2rem;
     height: 2rem;
@@ -227,7 +228,7 @@ export default function PuyoGame() {
     // チェーンカウンターをリセットするタイミングを遅らせる
     setTimeout(() => {
       setChainCounter(0)
-    }, 1000) // 1秒後にリセット
+    }, 3000) // 3秒後にリセット
 
     // ゲームオーバーのチェック
     if (newGrid[1].some(cell => cell !== null)) {
@@ -321,6 +322,7 @@ export default function PuyoGame() {
       case 'green': return 'bg-green-500 puyo-green'
       case 'blue': return 'bg-blue-500 puyo-blue'
       case 'yellow': return 'bg-yellow-500 puyo-yellow'
+      case 'purple': return 'bg-purple-500 puyo-purple'
       default: return 'bg-gray-100'
     }
   }
