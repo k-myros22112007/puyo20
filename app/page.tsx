@@ -383,7 +383,7 @@ export default function PuyoGame() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <style>{customStyles}</style>
-      <h1 className="text-4xl font-bold mb-4">Puyo Puyo</h1>
+      <h1 className="text-4xl font-bold mb-4">改造ぷよぷよ</h1>
       {gameState === 'title' && (
         <div className="text-center">
           <Button onClick={startGame} className="mb-4">Start Game</Button>
@@ -392,7 +392,11 @@ export default function PuyoGame() {
       )}
       {gameState === 'active' && (
         <div className="flex flex-col items-center">
-          <div className="flex gap-8 mb-4">
+          <div className="mb-4 text-center">
+            <h2 className="text-2xl font-semibold">Score: {score}</h2>
+            <h3 className="text-xl font-semibold">{chainCounter}連鎖</h3>
+          </div>
+          <div className="flex gap-8">
             <div className="flex flex-col items-center">
               <h2 className="text-2xl font-semibold mb-2">Hold</h2>
               {heldPuyo && (
@@ -403,17 +407,6 @@ export default function PuyoGame() {
               )}
             </div>
             <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-semibold mb-2">Next Puyos</h2>
-              {nextPuyos.map((puyo, index) => (
-                <div key={index} className="flex flex-col mb-2">
-                  <div className={`puyo-cell ${getPuyoColorClass(puyo.color2)}`} />
-                  <div className={`puyo-cell ${getPuyoColorClass(puyo.color1)}`} />
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-semibold mb-2">Score: {score}</h2>
-              <h3 className="text-xl font-semibold mb-2">Chain: {chainCounter}</h3>
               <div className="border-2 border-gray-400 relative">
                 {renderGrid()}
                 {currentPuyo && !isAnimating && (
@@ -421,7 +414,7 @@ export default function PuyoGame() {
                     <div
                       className={`puyo-cell ${getPuyoColorClass(currentPuyo.color1)} absolute`}
                       style={{
-                        left: `${currentPuyo.x  * 2}rem`,
+                        left: `${currentPuyo.x * 2}rem`,
                         top: `${currentPuyo.y * 2}rem`,
                         zIndex: 20,
                       }}
@@ -438,8 +431,17 @@ export default function PuyoGame() {
                 )}
               </div>
             </div>
+            <div className="flex flex-col items-center">
+              <h2 className="text-2xl font-semibold mb-2">Next</h2>
+              {nextPuyos.map((puyo, index) => (
+                <div key={index} className="flex flex-col mb-2">
+                  <div className={`puyo-cell ${getPuyoColorClass(puyo.color2)}`} />
+                  <div className={`puyo-cell ${getPuyoColorClass(puyo.color1)}`} />
+                </div>
+              ))}
+            </div>
           </div>
-          <Button onClick={togglePause}>{isPaused ? 'Resume' : 'Pause'}</Button>
+          <Button onClick={togglePause} className="mt-4">{isPaused ? 'Resume' : 'Pause'}</Button>
         </div>
       )}
       {gameState === 'over' && (
