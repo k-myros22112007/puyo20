@@ -273,7 +273,7 @@ export default function PuyoGame() {
         setGrid([...newGrid])
         await new Promise(resolve => setTimeout(resolve, 250)) // 0.25秒待機
 
-        playSound(500, 0.2) // チェーンリアクションの音を再生
+        playSound(500, 0.2) // チェーンリアクションの���を再生
       }
     }
 
@@ -364,11 +364,14 @@ export default function PuyoGame() {
   const hardDrop = () => {
     if (!currentPuyo || gameState !== 'active' || isPaused) return
 
-    let newPuyo = { ...currentPuyo }
-    while (isValidMove({ ...newPuyo, y: newPuyo.y + 1 })) {
-      newPuyo.y += 1
+    const newPuyo = { ...currentPuyo }
+    let y = newPuyo.y
+
+    while (isValidMove({ ...newPuyo, y: y + 1 })) {
+      y += 1
     }
-    setCurrentPuyo(newPuyo)
+
+    setCurrentPuyo({ ...newPuyo, y })
     placePuyo()
   }
 
