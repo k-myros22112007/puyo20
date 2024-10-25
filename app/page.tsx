@@ -341,7 +341,7 @@ export default function PuyoGame() {
       }
       if (isPaused) return
 
-      const action = Object.entries(controls).find(([_, keys]) => 
+      const action = Object.entries(controls).find(([, keys]) => 
         keys.includes(e.key)
       )?.[0] as ControlAction | undefined
 
@@ -436,7 +436,7 @@ export default function PuyoGame() {
         <div className="text-center">
           <Button onClick={startGame} className="mb-4">ゲームスタート</Button>
           <Button onClick={toggleOptions} className="mb-4 ml-4">オプション</Button>
-          <p className="text-xl">��イスコア: {highScore}</p>
+          <p className="text-xl">イスコア: {highScore}</p>
           {showOptions && (
             <div className="mt-4 p-4 bg-white rounded shadow">
               <h2 className="text-2xl font-bold mb-2">オプション</h2>
